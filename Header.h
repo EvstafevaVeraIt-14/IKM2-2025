@@ -14,12 +14,12 @@ using namespace std;
 
 class Stack {
 private:
-    vector<double> elem;
+    vector<string> elem;
 
 public:
     // Основные методы стека
-    void push(double num); // добавление элемента в стек
-    double pop(); // извлечение последнего элемента стека
+    void push(const string& num); // добавление элемента в стек
+    string pop(); // извлечение последнего элемента стека
     bool isEmpty(); // проверка стека на пустоту
     int getSize(); // размер стека
     void clear(); // очищение стека
@@ -31,8 +31,8 @@ bool isDouble(const string& str); // проверка на содержание 
 
 // Функции для работы с выражением
 double calculateExpression(Stack& stack); // функция для вычисления всего выражения
-bool isOperator(double token); // проверка на то, что элемент является оператором
-double calculation(double a, double b, double op); // вспомогательная функция, которая вычисляет результат каждого оператора
+bool isOperator(const string& str); // проверка на то, что элемент является оператором
+double calculation(double a, double b, const string& op); // вспомогательная функция, которая вычисляет результат каждого оператора
 
 // Функции ввода данных
 void inputFromConsole(Stack& stack); // функция для ввода выражения с консоли
