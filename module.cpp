@@ -1,11 +1,13 @@
 #include "Header.h"
 
 // Основные методы стека
-void Stack::push(double value) { elem.push_back(value); } // добавление элемента в стек
+void Stack::push(const string& num) { // добавление элемента в стек
+    elem.push_back(num);
+} 
 
-double Stack::pop() { // извлечение последнего элемента стека
-    if (isEmpty()) return 0.0;
-    double num = elem.back();
+string Stack::pop() { // извлечение последнего элемента стека
+    if (isEmpty()) return "";
+    string num = elem.back();
     elem.pop_back();
     return num;
 }
@@ -64,63 +66,46 @@ double calculateExpression(Stack& stack) { // функция для вычисл
         tempStack.push(stack.pop());
     }
     while (!tempStack.isEmpty() && !hasError) {
-        double element = tempStack.pop();
+        string element = tempStack.pop();
         if (isOperator(element)) {
             if (stack.getSize() < 2) {
-                cout << "Недостаточно операндов для оператора '"
-                    << static_cast<char>(element) << "'" << endl; // static_cast<char> для корректного чтения строки как оператора
+                cout << "Недостаточно операндов для оператора '" << element << "'" << endl;
                 hasError = true;
                 break;
             }
-            double b = stack.pop();
-            double a = stack.pop();
+            double b = stod(stack.pop());
+            double a = stod(stack.pop());
             double result = calculation(a, b, element);
-            if (result == 0 && (
-                (element == '/' && b == 0) ||
-                !isOperator(element)
-                )) {
-                hasError = true;
-                break;
-            }
-            stack.push(result);
+            stack.push(to_string(result));
         }
         else {
             stack.push(element);
         }
     }
-    if (hasError) {
+    if (hasError || stack.getSize() != 1) {
         stack.clear();
         return 0;
     }
-    if (stack.getSize() != 1) {
-        cout << "Некорректное выражение. В стеке осталось "
-            << stack.getSize() << " элементов" << endl;
-        stack.clear();
-        return 0;
-    }
-    return stack.pop();
+    return stod(stack.pop());
 }
 
-bool isOperator(double element) { // проверка на то, что элемент является оператором
-    char c = static_cast<char>(element); // static_cast<char> для корректного чтения строки как оператора
-    return c == '+' || c == '-' || c == '*' || c == '/';
+bool isOperator(const string& str) { // проверка на то, что элемент - оператор
+    return str == "+" || str == "-" || str == "*" || str == "/";
 }
 
-double calculation(double a, double b, double op) { // вспомогательная функция, которая вычисляет результат каждого оператора
-    switch (static_cast<char>(op)) { // static_cast<char> для корректного чтения строки как оператора
-    case '+': return a + b;
-    case '-': return a - b;
-    case '*': return a * b;
-    case '/':
+double calculation(double a, double b, const string& op) { // вспомогательная функция, которая вычисляет результат каждого оператора
+    if (op == "+") return a + b;
+    if (op == "-") return a - b;
+    if (op == "*") return a * b;
+    if (op == "/") {
         if (b == 0) {
             cout << "Деление на 0 невозможно." << endl;
             return 0;
         }
         return a / b;
-    default:
-        cout << "Недопустимый оператор: " << static_cast<char>(op) << endl; // static_cast<char> для корректного чтения строки как оператора
-        return 0;
     }
+    cout << "Недопустимый оператор: " << op << endl;
+    return 0;
 }
 
 
@@ -133,15 +118,12 @@ void inputFromConsole(Stack& stack) { // функция для ввода выр
     istringstream str(line);
     string element;
     while (str >> element) {
-        if (isDouble(element)) {
-            replace(element.begin(), element.end(), '.', ','); // для корректного чтения вещественных значений через '.'
-            stack.push(stod(element));
-        }
-        else if (element.size() == 1 && isOperator(static_cast<double>(element[0]))) { // static_cast<char> для корректного чтения строки как оператора
-            stack.push(static_cast<double>(element[0])); 
+        replace(element.begin(), element.end(), '.', ','); // для корректного чтения вещественных значений через '.'
+        if (isDouble(element) || isOperator(element)) {
+            stack.push(element);
         }
         else {
-            cout << "Пропущен недопустимый элемент: '" << element << "'\n";
+            cout << "Пропущен недопустимый элемент: '" << element << "'" << endl;
         }
     }
 
@@ -158,20 +140,16 @@ void inputFromFile(Stack& stack) { // функция для ввода выра�
     istringstream str(line);
     string element;
     while (str >> element) {
-        if (isDouble(element)) {
-            replace(element.begin(), element.end(), '.', ','); // для корректного чтения вещественных значений через '.'
-            stack.push(stod(element));
-        }
-        else if (isOperator(static_cast<double>(element[0]))) { // static_cast<char> для корректного чтения строки как оператора
-            stack.push(element[0]);
+        replace(element.begin(), element.end(), '.', ','); // для корректного чтения вещественных значений через '.'
+        if (isDouble(element) || isOperator(element)) {
+            stack.push(element);
         }
         else {
-            cout << "Недопустимый элемент '" << element << "' пропущен." << endl;
+            cout << "Пропущен недопустимый элемент: '" << element << "'" << endl;
         }
     }
     file.close();
 }
-
 void inputFromRandom(Stack& stack) { // функция для ввода выражения случайными значениями
     int maxLength = 10;
     vector<string> operators = { "+", "-", "*", "/" };
@@ -241,16 +219,14 @@ void inputFromRandom(Stack& stack) { // функция для ввода выр�
     string result;
     for (string element : expression) {
         result += element + " ";
-        if (isDouble(element)) {
-            replace(element.begin(), element.end(), '.', ','); // для корректного чтения вещественных значений через '.'
-            stack.push(stod(element));
-        }
-        else if (isOperator(static_cast<double>(element[0]))) { // static_cast<char> для корректного чтения строки как оператора
-            stack.push(element[0]);
+        replace(element.begin(), element.end(), '.', ','); // для корректного чтения вещественных значений через '.'
+        if (isDouble(element) || isOperator(element)) {
+            stack.push(element);
         }
         else {
-            cout << "Элемент '" << element << "' пропущен. ";
+            cout << "Пропущен недопустимый элемент: '" << element << "'" << endl;
         }
     }
     cout << "Сгенерировано выражение: " << result << endl;
 }
+
